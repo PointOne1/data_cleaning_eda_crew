@@ -1,0 +1,47 @@
+profiling_task:
+  description: >
+    Call the "Profile dataset" tool exactly once to profile the Excel workbook.
+    Then write a structured data-quality report. For EACH sheet, summarize: its
+    size, the columns with the most missing data, any constant or identifier
+    columns, columns stored with the wrong type (e.g. dates as integers), the
+    duplicate-row count, and the most notable outliers. End with a short bulleted
+    list titled "Top data-quality risks" covering the whole workbook.
+  expected_output: >
+    A Markdown data-quality report with one clearly headed section per sheet plus
+    a final "Top data-quality risks" bullet list. All numbers must come from the
+    tool output — do not invent figures.
+  agent: data_profiler
+
+engineering_task:
+  description: >
+    First call the "Clean dataset" tool once, then call the "Visualize dataset"
+    tool once. Using ONLY what those tools return, write a report that: (1)
+    summarizes the cleaning actions applied to each sheet and which columns still
+    have missing values, and (2) for each sheet describes what the histograms and
+    correlation matrix reveal — note skewed distributions and the strongest
+    variable correlations. Reference the saved figure file names.
+  expected_output: >
+    A Markdown report in two parts — "Cleaning summary" and "Visualization
+    findings" — that names the saved CSV and PNG files and describes the
+    distributions and correlations in plain language.
+  agent: code_developer
+  context:
+    - profiling_task
+
+reporting_task:
+  description: >
+    Using the profiling report and the cleaning/visualization findings from the
+    previous tasks, write a one-page EXECUTIVE SUMMARY of the dataset. Structure
+    it as: a 2-3 sentence overview of what the data contains; a "Key findings"
+    section (5-7 bullets on trends, distributions and correlations); a "Data
+    quality & limitations" section; and a "Recommended next steps" section.
+    Write for a non-technical manager. Do not invent any statistic that was not
+    provided by the earlier tasks.
+  expected_output: >
+    A polished one-page Markdown executive summary with the sections: Overview,
+    Key findings, Data quality & limitations, and Recommended next steps.
+  agent: insights_summarizer
+  context:
+    - profiling_task
+    - engineering_task
+  output_file: output/reports/executive_summary.md
