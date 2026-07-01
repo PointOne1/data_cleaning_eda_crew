@@ -47,6 +47,11 @@ GEMINI_API_KEY=your-key-here
 DATA_FILE=C:\path\to\your\dataset.xlsx
 ```
 
+`DATA_FILE` accepts either a local path or a Google Drive/Sheets share link
+(e.g. `https://docs.google.com/spreadsheets/d/<FILE_ID>/edit?usp=sharing`). The
+file must be shared as "Anyone with the link" — the crew downloads it as .xlsx
+into `output/downloads/` on first run and reuses the cached copy afterwards.
+
 ## Run
 
 ```bash

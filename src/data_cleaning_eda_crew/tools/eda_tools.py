@@ -8,6 +8,7 @@ compact Markdown string the agents can read, plus writes artifacts to ./output.
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 import matplotlib
@@ -16,6 +17,7 @@ matplotlib.use("Agg")  # headless: never try to open a window
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import requests
 import seaborn as sns
 from crewai.tools import tool
 
@@ -53,6 +55,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 OUTPUT_DIR = PROJECT_ROOT / "output"
 FIG_DIR = OUTPUT_DIR / "figures"
 CLEAN_DIR = OUTPUT_DIR / "cleaned"
+DOWNLOAD_DIR = OUTPUT_DIR / "downloads"
 for _d in (FIG_DIR, CLEAN_DIR):
     _d.mkdir(parents=True, exist_ok=True)
 
@@ -79,10 +82,57 @@ def set_data_source(source: str) -> None:
         _SHEET_CACHE.clear()
 
 
+_DRIVE_ID_PATTERNS = [
+    re.compile(r"/spreadsheets/d/([a-zA-Z0-9_-]+)"),
+    re.compile(r"/file/d/([a-zA-Z0-9_-]+)"),
+    re.compile(r"[?&]id=([a-zA-Z0-9_-]+)"),
+]
+
+
+def _extract_drive_file_id(url: str) -> str | None:
+    for pattern in _DRIVE_ID_PATTERNS:
+        m = pattern.search(url)
+        if m:
+            return m.group(1)
+    return None
+
+
+def _resolve_data_source(source: str) -> str:
+    """If `source` is a Google Drive / Google Sheets share link, download it as
+    an .xlsx file to a local cache and return that local path. Otherwise return
+    `source` unchanged (a plain local path or some other URL pandas can open).
+
+    The download uses Google's Sheets "export as xlsx" endpoint, which works
+    both for native Google Sheets and for .xlsx files opened/edited in the
+    Sheets UI. The file must be shared as "Anyone with the link".
+    """
+    if "drive.google.com" not in source and "docs.google.com" not in source:
+        return source
+
+    file_id = _extract_drive_file_id(source)
+    if not file_id:
+        raise ValueError(f"Could not find a Google Drive/Sheets file ID in: {source}")
+
+    DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    local_path = DOWNLOAD_DIR / f"{file_id}.xlsx"
+    if not local_path.exists():
+        export_url = f"https://docs.google.com/spreadsheets/d/{file_id}/export?format=xlsx"
+        resp = requests.get(export_url, timeout=120)
+        resp.raise_for_status()
+        if resp.headers.get("Content-Type", "").startswith("text/html"):
+            raise RuntimeError(
+                f"Google Drive returned a web page instead of the spreadsheet for "
+                f"file id {file_id}. Make sure it's shared as 'Anyone with the link'."
+            )
+        local_path.write_bytes(resp.content)
+    return str(local_path)
+
+
 def _all_sheets() -> dict[str, pd.DataFrame]:
     """Load and cache every sheet once (the workbook is read a single time)."""
     if not _SHEET_CACHE:
-        frames = pd.read_excel(DATA_FILE, sheet_name=None, engine="openpyxl")
+        resolved = _resolve_data_source(DATA_FILE)
+        frames = pd.read_excel(resolved, sheet_name=None, engine="openpyxl")
         _SHEET_CACHE.update(frames)
     return _SHEET_CACHE
 
