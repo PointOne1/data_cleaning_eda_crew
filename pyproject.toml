@@ -17,6 +17,9 @@ dependencies = [
 [project.scripts]
 run-crew = "data_cleaning_eda_crew.main:run"
 
+[tool.crewai]
+type = "crew"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
