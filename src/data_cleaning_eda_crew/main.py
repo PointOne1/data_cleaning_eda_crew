@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -22,7 +23,10 @@ from .crew import DataCleaningEdaCrew  # noqa: E402  (must follow load_dotenv)
 
 def run() -> None:
     print("Starting Automated Data Cleaning & EDA crew...\n")
-    result = DataCleaningEdaCrew().crew().kickoff()
+    # "data_file" is exposed as a crew input (see tasks.yaml) so a deployed run
+    # can point at an uploaded dataset's URL; locally it falls back to .env.
+    inputs = {"data_file": os.getenv("DATA_FILE", "")}
+    result = DataCleaningEdaCrew().crew().kickoff(inputs=inputs)
 
     print("\n" + "=" * 70)
     print("CREW FINISHED")

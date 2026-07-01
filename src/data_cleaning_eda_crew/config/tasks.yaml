@@ -1,5 +1,6 @@
 profiling_task:
   description: >
+    The dataset to analyze is the Excel workbook at: {data_file}
     Call the "Profile dataset" tool exactly once to profile the Excel workbook.
     Then write a structured data-quality report. For EACH sheet, summarize: its
     size, the columns with the most missing data, any constant or identifier

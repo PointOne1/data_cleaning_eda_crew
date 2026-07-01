@@ -64,6 +64,21 @@ sns.set_theme(style="whitegrid")
 _SHEET_CACHE: dict[str, pd.DataFrame] = {}
 
 
+def set_data_source(source: str) -> None:
+    """Point the tools at a different workbook (local path or http(s) URL) and
+    drop any sheets cached from a previous source.
+
+    Used by the crew's before_kickoff hook so a per-run "data_file" input
+    (e.g. a URL to a dataset a user uploaded elsewhere) overrides the DATA_FILE
+    env default without requiring the deployed crew to have local filesystem
+    access to it.
+    """
+    global DATA_FILE
+    if source:
+        DATA_FILE = source
+        _SHEET_CACHE.clear()
+
+
 def _all_sheets() -> dict[str, pd.DataFrame]:
     """Load and cache every sheet once (the workbook is read a single time)."""
     if not _SHEET_CACHE:

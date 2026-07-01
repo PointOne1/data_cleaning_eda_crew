@@ -5,9 +5,14 @@ from __future__ import annotations
 import os
 
 from crewai import LLM, Agent, Crew, Process, Task
-from crewai.project import CrewBase, agent, crew, task
+from crewai.project import CrewBase, agent, before_kickoff, crew, task
 
-from .tools.eda_tools import clean_dataset, profile_dataset, visualize_dataset
+from .tools.eda_tools import (
+    clean_dataset,
+    profile_dataset,
+    set_data_source,
+    visualize_dataset,
+)
 
 
 def _build_llm() -> LLM:
@@ -28,6 +33,14 @@ class DataCleaningEdaCrew:
 
     agents_config = "config/agents.yaml"
     tasks_config = "config/tasks.yaml"
+
+    # ---- Hooks -------------------------------------------------------------- #
+    @before_kickoff
+    def load_data_source(self, inputs: dict) -> dict:
+        """If the caller supplied a data_file (local path or http(s) URL),
+        point the EDA tools at it instead of the DATA_FILE env default."""
+        set_data_source(inputs.get("data_file", ""))
+        return inputs
 
     # ---- Agents ----------------------------------------------------------- #
     @agent
