@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 
 load_dotenv()  # load .env before the crew/tools read os.getenv
 
-from .crew import DataCleaningEdaCrew  # noqa: E402  (must follow load_dotenv)
+from data_cleaning_eda_crew.crew import DataCleaningEdaCrew  # noqa: E402  (must follow load_dotenv)
 
 
 def run() -> None:

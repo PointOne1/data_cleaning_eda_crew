@@ -7,7 +7,7 @@ import os
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, before_kickoff, crew, task
 
-from .tools.eda_tools import (
+from data_cleaning_eda_crew.tools.eda_tools import (
     clean_dataset,
     profile_dataset,
     set_data_source,
