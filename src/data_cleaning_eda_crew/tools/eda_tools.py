@@ -18,7 +18,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import requests
-import seaborn as sns
 from crewai.tools import tool
 
 # crewai/pydantic replaces warnings.warn with a wrapper that rejects the
@@ -59,7 +58,8 @@ DOWNLOAD_DIR = OUTPUT_DIR / "downloads"
 for _d in (FIG_DIR, CLEAN_DIR):
     _d.mkdir(parents=True, exist_ok=True)
 
-sns.set_theme(style="whitegrid")
+# matplotlib bundles the seaborn styles, so we get the same look without the dep.
+plt.style.use("seaborn-v0_8-whitegrid")
 
 # --------------------------------------------------------------------------- #
 # Shared helpers
@@ -323,11 +323,24 @@ def visualize_dataset() -> str:
         # --- Correlation heatmap ---
         if len(num_cols) >= 2:
             corr = df[num_cols].apply(pd.to_numeric, errors="coerce").corr()
+            labels = list(corr.columns)
             fig, ax = plt.subplots(figsize=(1.1 * len(num_cols) + 2,
                                             1.0 * len(num_cols) + 2))
-            sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm",
-                        center=0, vmin=-1, vmax=1, ax=ax, square=True,
-                        cbar_kws={"shrink": 0.7})
+            im = ax.imshow(corr.to_numpy(), cmap="coolwarm", vmin=-1, vmax=1)
+            ax.set_xticks(range(len(labels)))
+            ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)
+            ax.set_yticks(range(len(labels)))
+            ax.set_yticklabels(labels, fontsize=8)
+            # annotate each cell (white text on the dark high-|corr| ends)
+            for i in range(len(labels)):
+                for j in range(len(labels)):
+                    val = corr.iat[i, j]
+                    if pd.isna(val):
+                        continue
+                    ax.text(j, i, f"{val:.2f}", ha="center", va="center",
+                            fontsize=7,
+                            color="white" if abs(val) > 0.6 else "black")
+            fig.colorbar(im, ax=ax, shrink=0.7)
             ax.set_title(f"{sheet} — correlation matrix")
             fig.tight_layout()
             p = FIG_DIR / f"{slug}_correlation.png"

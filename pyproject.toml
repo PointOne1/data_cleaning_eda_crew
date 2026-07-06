@@ -4,12 +4,15 @@ version = "0.1.0"
 description = "A CrewAI crew that auto-profiles, cleans, and writes an executive EDA summary for a multi-sheet Excel dataset."
 requires-python = ">=3.11,<3.14"
 dependencies = [
+    # The google-genai extra is required: crewai 1.15.1 imports its native
+    # Gemini provider whenever a "gemini/" model is used, even though we route
+    # through LiteLLM. seaborn was dropped to trim the image — matplotlib alone
+    # (already a dependency) covers all the plotting.
     "crewai[google-genai]>=1.15.1",
     "pandas>=2.2,!=3.0.4",
     "numpy>=1.26",
     "openpyxl>=3.1",
     "matplotlib>=3.8",
-    "seaborn>=0.13",
     "python-dotenv>=1.0",
     "litellm>=1.90.0",
     "requests>=2.31",
